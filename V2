@@ -1,0 +1,149 @@
+-- LocalScript inside StarterPlayerScripts
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Main GUI
+local screenGui = Instance.new("ScreenGui", playerGui)
+screenGui.Name = "CommandChatGUI"
+screenGui.ResetOnSpawn = false
+
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 240, 0, 300)
+mainFrame.Position = UDim2.new(0, 20, 0, 100)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
+
+local title = Instance.new("TextLabel", mainFrame)
+title.Size = UDim2.new(1, 0, 0, 30)
+title.Text = "Command Chat"
+title.Font = Enum.Font.SourceSansBold
+title.TextSize = 20
+title.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Instance.new("UICorner", title).CornerRadius = UDim.new(0, 12)
+
+local scroll = Instance.new("ScrollingFrame", mainFrame)
+scroll.Size = UDim2.new(1, 0, 1, -30)
+scroll.Position = UDim2.new(0, 0, 0, 30)
+scroll.ScrollBarThickness = 4
+scroll.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+scroll.BorderSizePixel = 0
+scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+Instance.new("UICorner", scroll).CornerRadius = UDim.new(0, 12)
+
+local layout = Instance.new("UIListLayout", scroll)
+layout.SortOrder = Enum.SortOrder.LayoutOrder
+layout.Padding = UDim.new(0, 5)
+
+local commands = {
+    "?help", "?showinv", "?jump", "?rejoin", "?reset", "?sit", "?tp", "?test",
+    "?add name", "?additem name", "?addallitems", "?cleartrade", "?accept",
+    "?resetfruit name", "?invite", "?demolish"
+}
+
+local function sendChat(msg)
+    ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
+end
+
+-- Option GUI Function
+local function createOptionGui(name, options, onSelect)
+    local frame = Instance.new("Frame", screenGui)
+    frame.Size = UDim2.new(0, 160, 0, 300)
+    frame.Position = UDim2.new(0, 270, 0, 100)
+    frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    frame.BorderSizePixel = 0
+    frame.Visible = false
+    frame.Active = true
+    frame.Draggable = true
+
+    Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 14)
+
+    local scroll = Instance.new("ScrollingFrame", frame)
+    scroll.Size = UDim2.new(1, 0, 1, 0)
+    scroll.ScrollBarThickness = 4
+    scroll.BackgroundTransparency = 1
+    scroll.BorderSizePixel = 0
+    scroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+    local layout = Instance.new("UIListLayout", scroll)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 5)
+
+    for _, opt in ipairs(options) do
+        local btn = Instance.new("TextButton", scroll)
+        btn.Size = UDim2.new(1, -10, 0, 30)
+        btn.Text = opt
+        btn.Font = Enum.Font.SourceSans
+        btn.TextSize = 18
+        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.BorderSizePixel = 0
+        Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 10)
+
+        btn.MouseButton1Click:Connect(function()
+            onSelect(opt)
+            frame.Visible = false
+        end)
+    end
+
+    return frame
+end
+
+-- Options
+local addOptions = {
+    "kitsune", "yeti", "leopard", "spirit", "gas", "control", "venom", "shadow",
+    "dough", "trex", "mammoth", "gravity", "blizzard", "pain", "rumble", "portal",
+    "phoenix", "sound", "spider", "creation", "love", "buddha", "quake"
+}
+
+local addItemOptions = {
+    "Fruit Notifier", "Dark Blade", "2x Master", "2x Money", "Fast Boats",
+    "2x Boss Drop", "3x Mythical Scroll", "5x Legendary Scroll", "+1 Fruit Storage"
+}
+
+-- Create Option GUIs
+local addGui = createOptionGui("AddGui", addOptions, function(opt)
+    sendChat("?add " .. opt)
+end)
+
+local addItemGui = createOptionGui("AddItemGui", addItemOptions, function(opt)
+    sendChat("?additem " .. opt)
+end)
+
+local resetFruitGui = createOptionGui("ResetFruitGui", addOptions, function(opt)
+    sendChat("?resetfruit " .. opt)
+end)
+
+-- Create Command Buttons
+for _, cmd in ipairs(commands) do
+    local button = Instance.new("TextButton", scroll)
+    button.Size = UDim2.new(1, -10, 0, 28)
+    button.Text = cmd
+    button.Font = Enum.Font.SourceSans
+    button.TextSize = 18
+    button.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.BorderSizePixel = 0
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 10)
+
+    button.MouseButton1Click:Connect(function()
+        if cmd == "?add name" then
+            addGui.Visible = true
+        elseif cmd == "?additem name" then
+            addItemGui.Visible = true
+        elseif cmd == "?resetfruit name" then
+            resetFruitGui.Visible = true
+        else
+            sendChat(cmd)
+        end
+    end)
+end
