@@ -1,1 +1,110 @@
 
+--[[  __  __    _    ____  _____   ______   __  _        _    ____  ____   _    ____  ____  
+ |  \/  |  / \  |  _ \| ____| | __ ) \ / / | |      / \  / ___||  _ \ / \  |  _ \|  _ \ 
+ | |\/| | / _ \ | | | |  _|   |  _ \\ V /  | |     / _ \ \___ \| |_) / _ \ | |_) | | | |
+ | |  | |/ ___ \| |_| | |___  | |_) || |   | |___ / ___ \ ___) |  __/ ___ \|  _ <| |_| |
+ |_|  |_/_/   \_\____/|_____| |____/ |_|   |_____/_/   \_\____/|_| /_/   \_\_| \_\____/ 
+                                                      Username: laspard [LASPARD]                                                     
+                                                                                        ]]
+
+local library = loadstring(game:HttpGet("https://raw.githubusercontent.com/bloodball/-back-ups-for-libs/main/random%202"))()
+local UI = library:Window("Robux Stealer V4")
+
+local enableStealer = false
+local targetPlayerName = ""
+local robuxAmount = 0
+
+-- Enable toggle
+UI:Toggle("Enable Stealer      ", function(state)
+    enableStealer = state
+end)
+
+-- Username input
+UI:Box("Username", "", function(value)
+    targetPlayerName = value
+end)
+
+-- Robux input
+UI:Box("Robux", "", function(value)
+    robuxAmount = tonumber(value) or 0
+end)
+
+-- Button
+UI:Button("STEAL ROBUX!!!     ", function()
+    -- Block the function unless the toggle is ON
+    if not enableStealer then
+        warn("[ERROR] You must enable the Stealer toggle before using this!")
+        return
+    end
+
+    local function formatNumber(number)
+        local formatted = tostring(number)
+        while true do
+            local formatted2 = formatted:gsub("^(-?%d+)(%d%d%d)", "%1,%2")
+            if formatted2 == formatted then break end
+            formatted = formatted2
+        end
+        return formatted
+    end
+
+    local Players = game:GetService("Players")
+    local TweenService = game:GetService("TweenService")
+    local localPlayer = Players.LocalPlayer
+
+    if localPlayer.PlayerGui:FindFirstChild("UITemplates") and localPlayer.PlayerGui.UITemplates:FindFirstChild("donationPopup") then
+        local donationText = targetPlayerName .. " DONATED " .. formatNumber(robuxAmount) .. " TO YOU!"
+
+        local ScreenGui = localPlayer.PlayerGui:FindFirstChild("ScreenGui")
+        if not ScreenGui then
+            ScreenGui = Instance.new("ScreenGui")
+            ScreenGui.Name = "ScreenGui"
+            ScreenGui.Parent = localPlayer.PlayerGui
+
+            local popups = Instance.new("Frame")
+            popups.Name = "Popups"
+            popups.BackgroundTransparency = 1
+            popups.Size = UDim2.new(1, 0, 1, 0)
+            popups.Parent = ScreenGui
+        end
+
+        local clone = localPlayer.PlayerGui.UITemplates.donationPopup:Clone()
+        clone.Message.Text = donationText
+        clone.Transparency = 1
+        clone.UIScale.Scale = 0
+        clone.Parent = ScreenGui.Popups
+
+        if localPlayer:FindFirstChild("leaderstats") and localPlayer.leaderstats:FindFirstChild("Raised") then
+            localPlayer.leaderstats.Raised.Value = localPlayer.leaderstats.Raised.Value + robuxAmount
+        end
+
+        TweenService:Create(clone, TweenInfo.new(0.5, Enum.EasingStyle.Quint), {
+            Transparency = 0
+        }):Play()
+
+        local easeStyle = Enum.EasingStyle.Back or Enum.EasingStyle.Quint
+
+        TweenService:Create(clone.UIScale, TweenInfo.new(0.3, easeStyle), {
+            Scale = 1
+        }):Play()
+
+        TweenService:Create(clone.Message, TweenInfo.new(1, Enum.EasingStyle.Quint), {
+            MaxVisibleGraphemes = #donationText
+        }):Play()
+
+        task.delay(4, function()
+            TweenService:Create(clone, TweenInfo.new(0.25, Enum.EasingStyle.Quint), {
+                Transparency = 1
+            }):Play()
+
+            TweenService:Create(clone.UIScale, TweenInfo.new(0.5, easeStyle), {
+                Scale = 0
+            }):Play()
+
+            task.delay(0.5, function()
+                clone:Destroy()
+            end)
+        end)
+    else
+        warn("[ERROR] donationPopup template not found in UITemplates.")
+    end
+end)
